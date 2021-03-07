@@ -1,0 +1,24 @@
+ЗАПРОСЫ, ВЫБОРКИ ТРИГГЕРЫ И ПР.:
+1.	Найдем средний возраст собак в базе:
+SELECT ROUND(AVG((TO_DAYS(NOW()) - TO_DAYS(birthday)) / 365.25), 0) AS dogs_AVG_Age FROM dogs;
+2.	В таблице dogs есть два поля: breeder и owner. Допустимо присутствие обоих полей или одно из них. Ситуация, когда оба поля принимают неопределенное значение NULL неприемлема. Используя триггеры, добейтесь того, чтобы одно из этих полей или оба поля были заполнены.
+SELECT * FROM dogs;
+DROP TRIGGER IF EXISTS nullTrigger;
+delimiter //
+CREATE TRIGGER nullTrigger BEFORE INSERT ON dogs
+FOR EACH ROW
+BEGIN
+	IF(ISNULL(NEW.breeder) AND ISNULL(NEW.owner)) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Warning! Each dog must have breeder or owner!';
+	END IF;
+END //
+delimiter ;
+3.	Определить кто больше заработал титулов, кобели или суки?
+SELECT sex FROM (
+	SELECT "m" as sex, COUNT(*) as total FROM titles WHERE dog_id IN (SELECT doq_id FROM dogs as p WHERE sex='m')
+	UNION
+	SELECT "f" as sex, COUNT(*) as total FROM titles WHERE dog_id IN (SELECT doq_id FROM dogs as p WHERE sex='f')
+) as my_sort
+ORDER BY total DESC
+LIMIT 1;
+4. Пока кризис жанра, больше в голову запросов не приходит.
